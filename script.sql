@@ -2,7 +2,7 @@
 CREATE SCHEMA IF NOT EXISTS mytabs;
 
 -- Таблица для фильмов
-CREATE TABLE IF NOT EXISTS mytabs.rab1 (
+CREATE TABLE IF NOT EXISTS mytabs.tab1 (
     id SERIAL PRIMARY KEY,
     movie_title VARCHAR(255),
     release_year INT,
@@ -10,24 +10,24 @@ CREATE TABLE IF NOT EXISTS mytabs.rab1 (
 );
 
 -- Таблица для атрибутов фильма
-CREATE TABLE IF NOT EXISTS mytabs.rab2 (
+CREATE TABLE IF NOT EXISTS mytabs.tab2 (
     id SERIAL PRIMARY KEY,
-    movie_id INT REFERENCES mytabs.rab1(id),
+    movie_id INT REFERENCES mytabs.tab1(id),
     screenplay_author VARCHAR(255),
     director VARCHAR(255),
     awards_count INT
 );
 
 -- Таблица для актеров
-CREATE TABLE IF NOT EXISTS mytabs.rab3 (
+CREATE TABLE IF NOT EXISTS mytabs.tab3 (
     id SERIAL PRIMARY KEY,
-    movie_id INT REFERENCES mytabs.rab1(id),
+    movie_id INT REFERENCES mytabs.tab1(id),
     actor_name VARCHAR(255),
     role VARCHAR(255)
 );
 
 -- Заполнение таблиц данными
-INSERT INTO mytabs.rab1 (movie_title, release_year, studio) VALUES
+INSERT INTO mytabs.tab1 (movie_title, release_year, studio) VALUES
     ('Inception', 2010, 'Warner Bros.'),
     ('The Dark Knight', 2008, 'Warner Bros.'),
     ('The Godfather', 1972, 'Paramount Pictures'),
@@ -36,7 +36,7 @@ INSERT INTO mytabs.rab1 (movie_title, release_year, studio) VALUES
     ('Forrest Gump', 1994, 'Paramount Pictures'),
     ('The Shawshank Redemption', 1994, 'Castle Rock Entertainment');
 
-INSERT INTO mytabs.rab2 (movie_id, screenplay_author, director, awards_count) VALUES
+INSERT INTO mytabs.tab2 (movie_id, screenplay_author, director, awards_count) VALUES
     (1, 'Christopher Nolan', 'Christopher Nolan', 4),
     (2, 'Christopher Nolan', 'Christopher Nolan', 2),
     (3, 'Francis Ford Coppola', 'Francis Ford Coppola', 3),
@@ -45,7 +45,7 @@ INSERT INTO mytabs.rab2 (movie_id, screenplay_author, director, awards_count) VA
     (6, 'Winston Groom', 'Robert Zemeckis', 6),
     (7, 'Stephen King', 'Frank Darabont', 7);
 
-INSERT INTO mytabs.rab3 (movie_id, actor_name, role) VALUES
+INSERT INTO mytabs.tab3 (movie_id, actor_name, role) VALUES
     (1, 'Leonardo DiCaprio', 'Cobb'),
     (1, 'Joseph Gordon-Levitt', 'Arthur'),
     (2, 'Christian Bale', 'Bruce Wayne / Batman'),
@@ -70,7 +70,7 @@ SELECT
     director,
     SUM(awards_count) AS total_awards
 FROM
-    mytabs.rab2
+    mytabs.tab2
 GROUP BY
     director
 ORDER BY
@@ -83,7 +83,7 @@ SELECT
     actor_name,
     role
 FROM
-    mytabs.rab3
+    mytabs.tab3
 WHERE
     actor_name = 'Leonardo DiCaprio';
 
@@ -94,9 +94,9 @@ SELECT
     r.studio,
     r.director
 FROM
-    mytabs.rab1 r
+    mytabs.tab1 r
 JOIN
-    mytabs.rab2 a ON r.id = a.movie_id
+    mytabs.tab2 a ON r.id = a.movie_id
 GROUP BY
     r.movie_title, r.studio, r.director
 HAVING
@@ -109,9 +109,9 @@ SELECT
     r.actor_name,
     r.studio
 FROM
-    mytabs.rab1 m
+    mytabs.tab1 m
 JOIN
-    mytabs.rab3 r ON m.id = r.movie_id
+    mytabs.tab3 r ON m.id = r.movie_id
 GROUP BY
     r.actor_name, m.studio
 HAVING
@@ -123,8 +123,8 @@ SELECT
     r.actor_name,
     a.screenplay_author
 FROM
-    mytabs.rab2 a
+    mytabs.tab2 a
 JOIN
-    mytabs.rab3 r ON a.movie_id = r.movie_id
+    mytabs.tab3 r ON a.movie_id = r.movie_id
 WHERE
     a.screenplay_author = 'Christopher Nolan';
