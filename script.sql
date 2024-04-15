@@ -1,71 +1,130 @@
--- Создание ENUM для ролей членов семьи
-CREATE TYPE Role AS ENUM ('Husband', 'Wife', 'Son', 'Daughter');
+-- Создание схемы и таблиц
+CREATE SCHEMA IF NOT EXISTS mytabs;
 
--- Создание таблицы "Семьи"
-CREATE TABLE Families (
-    family_id SERIAL PRIMARY KEY,
-    family_name VARCHAR(100) NOT NULL
+-- Таблица для фильмов
+CREATE TABLE IF NOT EXISTS mytabs.rab1 (
+    id SERIAL PRIMARY KEY,
+    movie_title VARCHAR(255),
+    release_year INT,
+    studio VARCHAR(255)
 );
 
--- Создание таблицы "Члены семьи"
-CREATE TABLE FamilyMembers (
-    member_id SERIAL PRIMARY KEY,
-    family_id INT REFERENCES Families(family_id),
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    gender CHAR(1) NOT NULL CHECK (gender IN ('M', 'F')),
-    date_of_birth DATE NOT NULL,
-    is_twin BOOLEAN NOT NULL DEFAULT FALSE,
-    role_type Role NOT NULL
+-- Таблица для атрибутов фильма
+CREATE TABLE IF NOT EXISTS mytabs.rab2 (
+    id SERIAL PRIMARY KEY,
+    movie_id INT REFERENCES mytabs.rab1(id),
+    screenplay_author VARCHAR(255),
+    director VARCHAR(255),
+    awards_count INT
 );
 
--- Создание таблицы "Отношения"
-CREATE TABLE Relationships (
-    relationship_id SERIAL PRIMARY KEY,
-    member1_id INT REFERENCES FamilyMembers(member_id),
-    member2_id INT REFERENCES FamilyMembers(member_id),
-    relationship_type VARCHAR(50) NOT NULL,
-    CONSTRAINT unique_relationship UNIQUE (member1_id, member2_id),
-    CONSTRAINT no_bigamy CHECK (
-        NOT EXISTS (
-            SELECT 1 FROM Relationships r
-            WHERE (r.member1_id = member1_id OR r.member2_id = member1_id)
-              AND r.relationship_type = 'Spouse'
-        ) AND
-        NOT EXISTS (
-            SELECT 1 FROM Relationships r
-            WHERE (r.member1_id = member2_id OR r.member2_id = member2_id)
-              AND r.relationship_type = 'Spouse'
-        )
-    )
+-- Таблица для актеров
+CREATE TABLE IF NOT EXISTS mytabs.rab3 (
+    id SERIAL PRIMARY KEY,
+    movie_id INT REFERENCES mytabs.rab1(id),
+    actor_name VARCHAR(255),
+    role VARCHAR(255)
 );
 
--- Примеры вставки данных
--- Вставка семей
-INSERT INTO Families (family_name) VALUES ('Ивановы'), ('Петровы');
+-- Заполнение таблиц данными
+INSERT INTO mytabs.rab1 (movie_title, release_year, studio) VALUES
+    ('Inception', 2010, 'Warner Bros.'),
+    ('The Dark Knight', 2008, 'Warner Bros.'),
+    ('The Godfather', 1972, 'Paramount Pictures'),
+    ('Pulp Fiction', 1994, 'Miramax Films'),
+    ('Fight Club', 1999, '20th Century Fox'),
+    ('Forrest Gump', 1994, 'Paramount Pictures'),
+    ('The Shawshank Redemption', 1994, 'Castle Rock Entertainment');
 
--- Вставка членов семьи
-INSERT INTO FamilyMembers (family_id, first_name, last_name, gender, date_of_birth, is_twin, role_type)
-VALUES
-    (1, 'Иван', 'Иванов', 'M', '1975-01-01', FALSE, 'Husband'),
-    (1, 'Мария', 'Иванова', 'F', '1980-05-05', FALSE, 'Wife'),
-    (1, 'Петр', 'Иванов', 'M', '2000-10-10', FALSE, 'Son'),
-    (1, 'Анна', 'Иванова', 'F', '2005-12-12', FALSE, 'Daughter'),
-    (2, 'Алексей', 'Петров', 'M', '1982-03-15', FALSE, 'Husband'),
-    (2, 'Екатерина', 'Петрова', 'F', '1985-07-20', FALSE, 'Wife'),
-    (2, 'Иван', 'Петров', 'M', '2010-11-25', FALSE, 'Son'),
-    (2, 'Мария', 'Петрова', 'F', '2015-09-30', FALSE, 'Daughter');
+INSERT INTO mytabs.rab2 (movie_id, screenplay_author, director, awards_count) VALUES
+    (1, 'Christopher Nolan', 'Christopher Nolan', 4),
+    (2, 'Christopher Nolan', 'Christopher Nolan', 2),
+    (3, 'Francis Ford Coppola', 'Francis Ford Coppola', 3),
+    (4, 'Quentin Tarantino', 'Quentin Tarantino', 1),
+    (5, 'Chuck Palahniuk', 'David Fincher', 0),
+    (6, 'Winston Groom', 'Robert Zemeckis', 6),
+    (7, 'Stephen King', 'Frank Darabont', 7);
 
--- Вставка отношений
-INSERT INTO Relationships (member1_id, member2_id, relationship_type)
-VALUES
-    (1, 2, 'Spouse'),  -- Иван и Мария - супруги
-    (1, 3, 'Parent'),  -- Иван - отец Петра
-    (2, 3, 'Parent'),  -- Мария - мать Петра
-    (1, 4, 'Parent'),  -- Иван - отец Анны
-    (2, 4, 'Parent'),  -- Мария - мать Анны
-    (5, 6, 'Spouse'),  -- Алексей и Екатерина - супруги
-    (5, 7, 'Parent'),  -- Алексей - отец Ивана
-    (6, 7, 'Parent'),  -- Екатерина - мать Ивана
-    (5, 8, 'Parent'),  -- Алексей - отец Марии
-    (6, 8, 'Parent');  -- Екатерина - мать Марии
+INSERT INTO mytabs.rab3 (movie_id, actor_name, role) VALUES
+    (1, 'Leonardo DiCaprio', 'Cobb'),
+    (1, 'Joseph Gordon-Levitt', 'Arthur'),
+    (2, 'Christian Bale', 'Bruce Wayne / Batman'),
+    (2, 'Heath Ledger', 'Joker'),
+    (3, 'Marlon Brando', 'Don Vito Corleone'),
+    (3, 'Al Pacino', 'Michael Corleone'),
+    (4, 'John Travolta', 'Vincent Vega'),
+    (4, 'Uma Thurman', 'Mia Wallace'),
+    (5, 'Edward Norton', 'The Narrator'),
+    (5, 'Brad Pitt', 'Tyler Durden'),
+    (6, 'Tom Hanks', 'Forrest Gump'),
+    (6, 'Robin Wright', 'Jenny Curran'),
+    (7, 'Tim Robbins', 'Andy Dufresne'),
+    (7, 'Morgan Freeman', 'Ellis Boyd "Red" Redding');
+
+-- Создание схемы и представлений
+CREATE SCHEMA IF NOT EXISTS myviews;
+
+-- Представление для поиска режиссера с максимальным числом премий
+CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view1 AS
+SELECT
+    director,
+    SUM(awards_count) AS total_awards
+FROM
+    mytabs.rab2
+GROUP BY
+    director
+ORDER BY
+    total_awards DESC
+LIMIT 1;
+
+-- Представление для поиска всех ролей указанного актера
+CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view2 AS
+SELECT
+    actor_name,
+    role
+FROM
+    mytabs.rab3
+WHERE
+    actor_name = 'Leonardo DiCaprio';
+
+-- Представление для поиска всех фильмов, снятых на одной киностудии, одним и тем же режиссером
+CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view3 AS
+SELECT
+    r.movie_title,
+    r.studio,
+    r.director
+FROM
+    mytabs.rab1 r
+JOIN
+    mytabs.rab2 a ON r.id = a.movie_id
+GROUP BY
+    r.movie_title, r.studio, r.director
+HAVING
+    COUNT(DISTINCT r.studio) = 1
+    AND COUNT(DISTINCT r.director) = 1;
+
+-- Представление для поиска актеров, снимавшихся на одной киностудии
+CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view4 AS
+SELECT
+    r.actor_name,
+    r.studio
+FROM
+    mytabs.rab1 m
+JOIN
+    mytabs.rab3 r ON m.id = r.movie_id
+GROUP BY
+    r.actor_name, m.studio
+HAVING
+    COUNT(DISTINCT m.studio) = 1;
+
+-- Представление для поиска всех актеров, снимавшихся в фильмах определенного сценариста
+CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view5 AS
+SELECT
+    r.actor_name,
+    a.screenplay_author
+FROM
+    mytabs.rab2 a
+JOIN
+    mytabs.rab3 r ON a.movie_id = r.movie_id
+WHERE
+    a.screenplay_author = 'Christopher Nolan';
