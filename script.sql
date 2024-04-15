@@ -64,67 +64,46 @@ INSERT INTO mytabs.tab3 (movie_id, actor_name, role) VALUES
 -- Создание схемы и представлений
 CREATE SCHEMA IF NOT EXISTS myviews;
 
--- Представление для поиска режиссера с максимальным числом премий
-CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view1 AS
-SELECT
-    director,
-    SUM(awards_count) AS total_awards
-FROM
-    mytabs.tab2
-GROUP BY
-    director
-ORDER BY
-    total_awards DESC
+-- Удаление материализованных представлений, если они существуют
+DROP MATERIALIZED VIEW IF EXISTS myviews.view1;
+DROP MATERIALIZED VIEW IF EXISTS myviews.view2;
+DROP MATERIALIZED VIEW IF EXISTS myviews.view3;
+DROP MATERIALIZED VIEW IF EXISTS myviews.view4;
+DROP MATERIALIZED VIEW IF EXISTS myviews.view5;
+
+-- Материализованное представление 1: Найти режиссера с наибольшим числом премий
+CREATE MATERIALIZED VIEW myviews.view1 AS
+SELECT director
+FROM mytabs.tab2
+GROUP BY director
+ORDER BY SUM(awards_count) DESC
 LIMIT 1;
 
--- Представление для поиска всех ролей указанного актера
-CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view2 AS
-SELECT
-    actor_name,
-    role
-FROM
-    mytabs.tab3
-WHERE
-    actor_name = 'Leonardo DiCaprio';
+-- Материализованное представление 2: Найти все роли указанного актера
+CREATE MATERIALIZED VIEW myviews.view2 AS
+SELECT actor_name, role
+FROM mytabs.tab3
+WHERE actor_name = 'Leonardo DiCaprio';
 
--- Представление для поиска всех фильмов, снятых на одной киностудии, одним и тем же режиссером
-CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view3 AS
-SELECT
-    r.movie_title,
-    r.studio,
-    r.director
-FROM
-    mytabs.tab1 r
-JOIN
-    mytabs.tab2 a ON r.id = a.movie_id
-GROUP BY
-    r.movie_title, r.studio, r.director
-HAVING
-    COUNT(DISTINCT r.studio) = 1
-    AND COUNT(DISTINCT r.director) = 1;
+-- Материализованное представление 3: Найти все фильмы, снятые на одной киностудии, одним и тем же режиссером
+CREATE MATERIALIZED VIEW myviews.view3 AS
+SELECT t1.movie_title, t1.studio, t2.director
+FROM mytabs.tab1 t1
+JOIN mytabs.tab2 t2 ON t1.id = t2.movie_id
+GROUP BY t1.movie_title, t1.studio, t2.director
+HAVING COUNT(DISTINCT t2.director) = 1;
 
--- Представление для поиска актеров, снимавшихся на одной киностудии
-CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view4 AS
-SELECT
-    r.actor_name,
-    r.studio
-FROM
-    mytabs.tab1 m
-JOIN
-    mytabs.tab3 r ON m.id = r.movie_id
-GROUP BY
-    r.actor_name, m.studio
-HAVING
-    COUNT(DISTINCT m.studio) = 1;
+-- Материализованное представление 4: Найти актеров, снимавшихся на одной киностудии
+CREATE MATERIALIZED VIEW myviews.view4 AS
+SELECT t3.actor_name, t1.studio
+FROM mytabs.tab1 t1
+JOIN mytabs.tab3 t3 ON t1.id = t3.movie_id
+GROUP BY t3.actor_name, t1.studio
+HAVING COUNT(DISTINCT t3.actor_name) > 1;
 
--- Представление для поиска всех актеров, снимавшихся в фильмах определенного сценариста
-CREATE MATERIALIZED VIEW IF NOT EXISTS myviews.view5 AS
-SELECT
-    r.actor_name,
-    a.screenplay_author
-FROM
-    mytabs.tab2 a
-JOIN
-    mytabs.tab3 r ON a.movie_id = r.movie_id
-WHERE
-    a.screenplay_author = 'Christopher Nolan';
+-- Материализованное представление 5: Найти всех актеров, снимавшихся в фильмах определенного сценариста
+CREATE MATERIALIZED VIEW myviews.view5 AS
+SELECT DISTINCT t3.actor_name, t2.screenplay_author
+FROM mytabs.tab3 t3
+JOIN mytabs.tab2 t2 ON t3.movie_id = t2.movie_id
+WHERE t2.screenplay_author = 'Quentin Tarantino';
